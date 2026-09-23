@@ -26,7 +26,7 @@ public struct VoiceBeamConfiguration: Sendable {
     public var threshold = 0.015
     public var attack = 0.325
     public var release = 0.86
-    public var idle = 0.23
+    public var idle = 0.18
     public var breatheDuration = 5.2
     public var reach = 1.2
     public var spread = 1.05

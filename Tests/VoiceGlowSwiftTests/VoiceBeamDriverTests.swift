@@ -62,4 +62,33 @@ struct VoiceBeamDriverTests {
         }
         #expect(driver.currentFrame.glow < lit * 0.01)
     }
+
+    @Test func manualLevelDoesNotUseMicrophoneSensitivity() {
+        var lowGain = VoiceBeamDriver()
+        var highGain = VoiceBeamDriver()
+        var lowConfig = VoiceBeamConfiguration(preset: .mobile)
+        var highConfig = lowConfig
+        lowConfig.sensitivity = 0.1
+        highConfig.sensitivity = 20
+        for tick in 0..<180 {
+            let timestamp = Double(tick) / 60
+            _ = lowGain.step(timestamp: timestamp, input: 0.65, configuration: lowConfig)
+            _ = highGain.step(timestamp: timestamp, input: 0.65, configuration: highConfig)
+        }
+        #expect(abs(lowGain.currentFrame.level - highGain.currentFrame.level) < 0.000_001)
+        #expect(lowGain.currentFrame.level > 0.8)
+    }
+
+    @Test func staticColorsHoldHueWhileAnimationContinues() {
+        var driver = VoiceBeamDriver()
+        var configuration = VoiceBeamConfiguration(preset: .mobile)
+        configuration.staticColors = true
+        configuration.flow = 0
+        for tick in 0..<180 {
+            _ = driver.step(timestamp: Double(tick) / 60, input: 0.65,
+                            configuration: configuration)
+        }
+        #expect(driver.currentFrame.hue == 0)
+        #expect(driver.currentFrame.intensity > 0.8)
+    }
 }

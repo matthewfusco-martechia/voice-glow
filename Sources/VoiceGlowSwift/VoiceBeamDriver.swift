@@ -34,10 +34,9 @@ public struct VoiceBeamDriver: Sendable {
             level = follow(level, 0, dt: dt, rise: configuration.attack, fall: configuration.release)
             processingBlend = follow(processingBlend, 0, dt: dt, rise: 0.1, fall: 0.18)
         } else {
-            // The JS manual source defaults to unity; here sensitivity stays usable
-            // with the manual source, relative to its 3.1 reference setting.
-            let gain = configuration.sensitivity / 3.1
-            let raw = clamp(input * gain)
+            // The source's manual level bypasses microphone gain. Sensitivity
+            // belongs to the live-audio input chain, not this 0–1 getter.
+            let raw = clamp(input)
             level = follow(level, shape(raw, gate: configuration.threshold), dt: dt,
                            rise: configuration.attack, fall: configuration.release)
             let syntheticMid = raw * (0.72 + 0.28 * sin(time * 9.1))
@@ -89,7 +88,7 @@ public struct VoiceBeamDriver: Sendable {
             gather: 1 - morph * 0.6, maskWidth: 1 - morph * 0.45,
             processingMorph: morph,
             hue: configuration.staticColors || reduceMotion ? 0 :
-                configuration.hueRange * sin(2 * .pi * time / max(0.1, configuration.hueDuration)),
+                -configuration.hueRange * cos(2 * .pi * time / max(0.1, configuration.hueDuration)),
             time: time
         )
         heldFrame = frame

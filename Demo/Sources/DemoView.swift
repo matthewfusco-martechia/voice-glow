@@ -4,24 +4,18 @@ import VoiceGlowSwift
 struct DemoView: View {
     @State private var configuration: VoiceBeamConfiguration = {
         var result = VoiceBeamConfiguration(preset: .mobile, theme: .dark)
-        result.colors = [
-            BeamRGB(230, 65, 165), BeamRGB(188, 59, 173), BeamRGB(222, 93, 170),
-            BeamRGB(63, 165, 165), BeamRGB(244, 166, 96),
-            BeamRGB(65, 152, 178), BeamRGB(98, 188, 163)
-        ]
-        result.flow = 4
-        result.bandStrength = 0.12
-        result.strokeOpacity = 0.22
-        result.innerOpacity = 0.55
-        result.bloomOpacity = 0.80
-        result.glowHeight = 1.55
-        result.rangeHeight = 0.88
-        result.strength = 0.9
-        result.borderRadius = 56
+        result.borderRadius = 0
+        if ProcessInfo.processInfo.arguments.contains("--voice-glow-reference") {
+            result.bands = false
+            result.flow = 0
+            result.staticColors = true
+            result.distortion = 0
+            result.idle = 0
+        }
         return result
     }()
     @State private var level = 0.65
-    @State private var playingSample = true
+    @State private var playingSample = !ProcessInfo.processInfo.arguments.contains("--voice-glow-reference")
     @State private var sampleTask: Task<Void, Never>?
     @State private var showsSettings = false
     @State private var selectedAgent = "Agent (auto)"
@@ -73,7 +67,7 @@ struct DemoView: View {
     private var panelColor: Color {
         configuration.theme == .light
             ? Color(red: 0.96, green: 0.96, blue: 0.97)
-            : Color(red: 0.105, green: 0.105, blue: 0.105)
+            : Color(red: 17 / 255, green: 17 / 255, blue: 17 / 255)
     }
 
     private func startSampleIfNeeded() {
@@ -82,8 +76,15 @@ struct DemoView: View {
             let start = Date()
             while !Task.isCancelled {
                 let t = Date().timeIntervalSince(start)
-                let syllable = max(0, sin(t * 12.5)) * (0.23 + 0.28 * sin(t * 2.4))
-                level = min(1, max(0.1, 0.34 + syllable + 0.12 * sin(t * 3.2)))
+                let phrase = t.truncatingRemainder(dividingBy: 9)
+                if phrase > 6.6 {
+                    level = 0
+                } else {
+                    let syllable = 0.5 + 0.5 * sin(t * .pi * 2 * 3.1)
+                    let word = 0.5 + 0.5 * sin(t * .pi * 2 * 0.55 + 1)
+                    let rough = 0.86 + 0.14 * sin(t * 23.7)
+                    level = min(1, pow(syllable, 1.6) * (0.5 + 0.5 * word) * rough * 1.05)
+                }
                 try? await Task.sleep(for: .milliseconds(33))
             }
         }

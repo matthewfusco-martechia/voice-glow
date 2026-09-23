@@ -39,11 +39,13 @@ All visual controls from the source are properties of `VoiceBeamConfiguration`. 
 
 ## Version scope
 
-V1 accepts a normalized manual level (0–1) or per-frame getter and synthesizes low/mid/high motion from that level. It does **not** yet request microphone permission, analyze a live audio stream, or respond to true frequency bands. The microphone-shaped demo button pauses or resumes the synthetic pulse; it does not record audio. A later native audio meter can feed this same driver without changing the rendering API. This is a native visual interpretation, not a pixel-matched port of the source renderer. Unlike the source React component, this package does not include web-only `className`, `style`, `css`, or DOM callbacks.
+V1 accepts a normalized manual level (0–1) or per-frame getter and synthesizes low/mid/high motion from that level. It does **not** yet request microphone permission, analyze a live audio stream, or respond to true frequency bands. The microphone-shaped demo button pauses or resumes the synthetic pulse; it does not record audio. A later native audio meter can feed this same driver without changing the rendering API. The Swift renderer now follows the source's separate inner, stroke, bloom, and band layers, but exact pixel equivalence has not been established. Unlike the source React component, this package does not include web-only `className`, `style`, `css`, or DOM callbacks.
 
 ## Verification
 
-`swift test` runs the driver tests. On a File Provider-backed macOS workspace, use `swift test --scratch-path /tmp/voice-glow-swift-build` if local code signing rejects the default build directory. The demo was also built, installed, and launched on the iPhone 18 Pro iOS 27 simulator. The current listening-screen capture is `listening-demo-simulator.png`; visual tuning should still be confirmed in the target app.
+`swift test` runs the driver tests. On a File Provider-backed macOS workspace, use `swift test --scratch-path /tmp/voice-glow-swift-build` if local code signing rejects the default build directory. The demo was also built, installed, and launched on the iPhone 18 Pro iOS 27 simulator.
+
+For a repeatable visual comparison with the React source, launch the demo with the argument `--voice-glow-reference`. This freezes the manual input at 0.65 and selects the mobile/dark preset with bands off, flow 0, static colors, distortion 0, and idle 0. The iPhone 18 Pro simulator measures 402×874 points; use a 402×874 host with those same props in the React package and allow the attack envelope to settle before capturing. The live demo uses the source's nine-second synthetic speech pattern instead. The fixed comparison verifies layer structure and placement; browser/SVG and native Canvas compositing can still differ, so review on a physical target device before treating visual parity as final.
 
 ## Attribution
 

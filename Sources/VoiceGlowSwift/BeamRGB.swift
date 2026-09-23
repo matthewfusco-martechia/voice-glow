@@ -33,25 +33,34 @@ public struct BeamRGB: Hashable, Sendable {
     public var color: Color { Color(red: red, green: green, blue: blue) }
 
     func adjusted(saturation: Double, brightness: Double, hueDegrees: Double) -> Color {
-        let high = max(red, green, blue)
-        let low = min(red, green, blue)
-        let delta = high - low
-        let sourceSaturation = high == 0 ? 0 : delta / high
-        let hue: Double
-        if delta == 0 {
-            hue = 0
-        } else if high == red {
-            hue = (green - blue) / delta / 6
-        } else if high == green {
-            hue = ((blue - red) / delta + 2) / 6
-        } else {
-            hue = ((red - green) / delta + 4) / 6
-        }
-        let shifted = (hue + hueDegrees / 360).truncatingRemainder(dividingBy: 1)
-        return Color(
-            hue: shifted < 0 ? shifted + 1 : shifted,
-            saturation: min(1, max(0, sourceSaturation * saturation)),
-            brightness: min(1, max(0, high * brightness))
-        )
+        // CSS hue-rotate(), brightness(), saturate() are colour matrices,
+        // not HSV operations. Keep their source order for closer parity.
+        let angle = hueDegrees * .pi / 180
+        let cosine = cos(angle)
+        let sine = sin(angle)
+        let hueRed = (0.213 + 0.787 * cosine - 0.213 * sine) * red
+            + (0.715 - 0.715 * cosine - 0.715 * sine) * green
+            + (0.072 - 0.072 * cosine + 0.928 * sine) * blue
+        let hueGreen = (0.213 - 0.213 * cosine + 0.143 * sine) * red
+            + (0.715 + 0.285 * cosine + 0.140 * sine) * green
+            + (0.072 - 0.072 * cosine - 0.283 * sine) * blue
+        let hueBlue = (0.213 - 0.213 * cosine - 0.787 * sine) * red
+            + (0.715 - 0.715 * cosine + 0.715 * sine) * green
+            + (0.072 + 0.928 * cosine + 0.072 * sine) * blue
+        let r = hueRed * brightness
+        let g = hueGreen * brightness
+        let b = hueBlue * brightness
+        let finalRed = (0.213 + 0.787 * saturation) * r
+            + (0.715 - 0.715 * saturation) * g
+            + (0.072 - 0.072 * saturation) * b
+        let finalGreen = (0.213 - 0.213 * saturation) * r
+            + (0.715 + 0.285 * saturation) * g
+            + (0.072 - 0.072 * saturation) * b
+        let finalBlue = (0.213 - 0.213 * saturation) * r
+            + (0.715 - 0.715 * saturation) * g
+            + (0.072 + 0.928 * saturation) * b
+        return Color(red: min(1, max(0, finalRed)),
+                     green: min(1, max(0, finalGreen)),
+                     blue: min(1, max(0, finalBlue)))
     }
 }
